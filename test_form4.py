@@ -30,7 +30,7 @@ def setup_browser():
     driver_options.add_argument('--disable-popup-blocking')
     driver_options.add_argument('--disable-infobars')
 
-    # Применяем настройки к браузеру
+    # Применяем настройки к браузеру chrome
     browser.config.driver_options = driver_options
 
     # Открываем страницу с формой
