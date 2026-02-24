@@ -1,74 +1,71 @@
+import time
 import os
-import pytest
-import time  # Добавлен импорт time
 from selene import browser, be, have
-from selene.support.shared import config
-from selenium import webdriver
 
 
-@pytest.fixture(scope='function')
-def setup_browser():
-    """Настройка браузера перед каждым тестом"""
-    # Конфигурация Selene
-    config.browser_name = 'chrome'
-    config.base_url = 'https://demoqa.com'
-    config.timeout = 10
-    config.window_width = 1600
-    config.window_height = 1200
-
-    # Настройки Chrome Driver
-    driver_options = webdriver.ChromeOptions()
-
-    # Стратегия загрузки страницы:
-    # 'normal' - ждать полной загрузки (по умолчанию)
-    # 'eager' - ждать загрузки DOM, но не ресурсов (быстрее)
-    # 'none' - не ждать вообще
-    driver_options.page_load_strategy = 'eager'
-
-    # Дополнительные опции для ускорения и стабильности
-    driver_options.add_argument('--disable-notifications')
-    driver_options.add_argument('--disable-popup-blocking')
-    driver_options.add_argument('--disable-infobars')
-
-    # Применяем настройки к браузеру chrome
-    browser.config.driver_options = driver_options
-
-    # Открываем страницу с формой
+def test_fill_complete_form(setup_browser):
+    """Полный тест формы с проверкой всех данных"""
+    # Открыть форму
     browser.open('/automation-practice-form')
 
-    # Убираем мешающие элементы (рекламу, футер)
-    browser.execute_script("""
-        const footer = document.querySelector('footer');
-        if (footer) footer.style.display = 'none';
-        const fixedban = document.getElementById('fixedban');
-        if (fixedban) fixedban.style.display = 'none';
-    """)
-
-    yield
-
-    # Закрываем браузер после теста
-    browser.quit()
-
-
-def test_fill_form_simple(setup_browser):
-    """Упрощенный тест"""
-    # Только обязательные поля
+    # Заполнить личную информацию
     browser.element('#firstName').should(be.visible).type('Иляна')
     browser.element('#lastName').should(be.visible).type('Очирова')
     browser.element('#userEmail').should(be.visible).type('ilyana@example.com')
     browser.element('[for="gender-radio-2"]').should(be.visible).click()
     browser.element('#userNumber').should(be.visible).type('1234567890')
-    browser.element('#currentAddress').should(be.visible).type('Moscow')
 
-    # Скролл и отправка
-    submit = browser.element('#submit').should(be.visible)
-    browser.driver.execute_script("arguments[0].scrollIntoView(true);", submit())
-    time.sleep(0.5)  # Теперь time импортирован
+    # Выбрать дату рождения
+    browser.element('#dateOfBirthInput').click()
+    browser.element('.react-datepicker__month-select').type('May')
+    browser.element('.react-datepicker__year-select').type('1990')
+    browser.element('.react-datepicker__day--015').click()
 
-    # Лучше использовать стандартный клик вместо JS submit
-    # browser.driver.execute_script("document.getElementById('userForm').submit();")
-    submit.click()
+    # Заполнить Subjects
+    browser.element('#subjectsInput').type('Maths').press_enter()
+    browser.element('#subjectsInput').type('Physics').press_enter()
 
-    # Проверка
+    # Выбрать хобби
+    browser.element('[for="hobbies-checkbox-2"]').should(be.visible).click()  # Reading
+    browser.element('[for="hobbies-checkbox-3"]').should(be.visible).click()  # Music
+
+    # Прикрепить файл
+    file_path = os.path.abspath('test_picture.jpg')
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            f.write('test content')
+    browser.element('#uploadPicture').send_keys(file_path)
+
+    # Заполнить адрес
+    browser.element('#currentAddress').should(be.visible).type('Moscow, Red Square, 1')
+
+    # Выбрать штат и город
+    browser.execute_script("window.scrollBy(0, 500)")
+    browser.element('#state').click()
+    browser.element('#react-select-3-option-0').should(be.visible).click()  # NCR
+    browser.element('#city').click()
+    browser.element('#react-select-4-option-0').should(be.visible).click()  # Delhi
+
+    # Отправить форму
+    browser.element('#submit').should(be.visible).click()
+
+    # Проверить модальное окно
     browser.element('.modal-content').should(be.visible)
-    print("✓ Форма отправлена")
+    browser.element('#example-modal-sizes-title-lg').should(have.text('Thanks for submitting the form'))
+
+    # Проверить все данные
+    browser.element('tbody tr:nth-child(1) td:nth-child(2)').should(have.text('Иляна Очирова'))
+    browser.element('tbody tr:nth-child(2) td:nth-child(2)').should(have.text('ilyana@example.com'))
+    browser.element('tbody tr:nth-child(3) td:nth-child(2)').should(have.text('Female'))
+    browser.element('tbody tr:nth-child(4) td:nth-child(2)').should(have.text('1234567890'))
+    browser.element('tbody tr:nth-child(5) td:nth-child(2)').should(have.text('15 May,1990'))
+    browser.element('tbody tr:nth-child(6) td:nth-child(2)').should(have.text('Maths, Physics'))
+    browser.element('tbody tr:nth-child(7) td:nth-child(2)').should(have.text('Reading, Music'))
+    browser.element('tbody tr:nth-child(8) td:nth-child(2)').should(have.text('test_picture.jpg'))
+    browser.element('tbody tr:nth-child(9) td:nth-child(2)').should(have.text('Moscow, Red Square, 1'))
+    browser.element('tbody tr:nth-child(10) td:nth-child(2)').should(have.text('NCR Delhi'))
+
+    print("✓ Форма успешно заполнена и все данные проверены")
+
+    # Закрыть модальное окно
+    browser.element('#closeLargeModal').click()
