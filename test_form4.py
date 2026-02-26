@@ -2,44 +2,36 @@ import time
 import os
 from selene import browser, be, have
 
-
 def test_fill_complete_form(setup_browser):
-    """Полный тест формы с проверкой всех данных"""
-    # Открыть форму
     browser.open('/automation-practice-form')
 
-    # Заполнить личную информацию
-    browser.element('#firstName').should(be.visible).type('Иляна')
-    browser.element('#lastName').should(be.visible).type('Очирова')
-    browser.element('#userEmail').should(be.visible).type('ilyana@example.com')
-    browser.element('[for="gender-radio-2"]').should(be.visible).click()
-    browser.element('#userNumber').should(be.visible).type('1234567890')
+    browser.element('#firstName').type('Иляна')
+    browser.element('#lastName').type('Очирова')
+    browser.element('#userEmail').type('ilyana@example.com')
+    browser.element('[for="gender-radio-2"]').click()
+    browser.element('#userNumber').type('1234567890')
 
-    # Выбрать дату рождения
+
     browser.element('#dateOfBirthInput').click()
     browser.element('.react-datepicker__month-select').type('May')
     browser.element('.react-datepicker__year-select').type('1990')
     browser.element('.react-datepicker__day--015').click()
 
-    # Заполнить Subjects
+
     browser.element('#subjectsInput').type('Maths').press_enter()
     browser.element('#subjectsInput').type('Physics').press_enter()
 
-    # Выбрать хобби
-    browser.element('[for="hobbies-checkbox-2"]').should(be.visible).click()  # Reading
-    browser.element('[for="hobbies-checkbox-3"]').should(be.visible).click()  # Music
+    browser.element('[for="hobbies-checkbox-2"]').click()  # Reading
+    browser.element('[for="hobbies-checkbox-3"]').click()  # Music
 
-    # Прикрепить файл
     file_path = os.path.abspath('test_picture.jpg')
     if not os.path.exists(file_path):
         with open(file_path, 'w') as f:
             f.write('test content')
     browser.element('#uploadPicture').send_keys(file_path)
 
-    # Заполнить адрес
     browser.element('#currentAddress').should(be.visible).type('Moscow, Red Square, 1')
 
-    # Выбрать штат и город
     browser.execute_script("window.scrollBy(0, 500)")
     browser.element('#state').click()
     browser.element('#react-select-3-option-0').should(be.visible).click()  # NCR
