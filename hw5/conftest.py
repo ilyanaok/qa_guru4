@@ -9,8 +9,8 @@ def setup_browser():
     config.browser_name = 'chrome'
     config.base_url = 'https://demoqa.com'
     config.timeout = 10
-    config.window_width = 1600
-    config.window_height = 1200
+    config.window_width = 1920
+    config.window_height = 1080
 
     driver_options = webdriver.ChromeOptions()
     driver_options.page_load_strategy = 'eager'
